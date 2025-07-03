@@ -7,7 +7,7 @@ import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { fetch } from "expo/fetch";
+import { fetch as expoFetch } from "expo/fetch";
 export default function HomeScreen() {
   const [uploadStatus, setUploadStatus] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -34,7 +34,6 @@ export default function HomeScreen() {
     if (!pickerResult.canceled && pickerResult.assets) {
       const imageUris = pickerResult.assets.map((asset) => asset.uri);
       setSelectedImages(imageUris);
-      await uploadImages(pickerResult.assets);
     }
   };
 
@@ -59,32 +58,75 @@ export default function HomeScreen() {
     if (!pickerResult.canceled && pickerResult.assets) {
       const imageUris = pickerResult.assets.map((asset) => asset.uri);
       setSelectedImages(imageUris);
-      await uploadImages(pickerResult.assets);
     }
   };
 
-  const uploadImages = async (assets: ImagePicker.ImagePickerAsset[]) => {
-    setUploadStatus("Uploading...");
+  const uploadImagesWithExpoFetch = async (assets: ImagePicker.ImagePickerAsset[]) => {
+    setUploadStatus("Uploading with expo/fetch...");
 
     const formData = new FormData();
 
     for (let i = 0; i < assets.length; i++) {
       const asset = assets[i];
-      const response = await fetch(`file://${asset.uri}`);
-      console.log("D");
-      const blob = await response.blob();
-      console.log("B");
-      const formData = new FormData();
       const filename = asset.uri.split("/").pop() || `image_${i}.jpg`;
-      formData.append("source", blob, filename);
-      console.log("C");
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image/jpeg";
+
+      formData.append(`file${i}`, {
+        uri: asset.uri,
+        name: filename,
+        type,
+      } as any);
     }
 
     formData.append("totalFiles", assets.length.toString());
     formData.append("uploadTime", new Date().toISOString());
 
     try {
-      console.log("A");
+      const response = await expoFetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setUploadStatus(`expo/fetch upload successful! ${assets.length} images uploaded`);
+
+      setTimeout(() => setUploadStatus(""), 3000);
+    } catch (error) {
+      setUploadStatus(`expo/fetch upload failed: ${error.message}`);
+      setTimeout(() => setUploadStatus(""), 3000);
+    }
+  };
+
+  const uploadImagesWithGlobalFetch = async (assets: ImagePicker.ImagePickerAsset[]) => {
+    setUploadStatus("Uploading with global fetch...");
+
+    const formData = new FormData();
+
+    for (let i = 0; i < assets.length; i++) {
+      const asset = assets[i];
+      const filename = asset.uri.split("/").pop() || `image_${i}.jpg`;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image/jpeg";
+
+      formData.append(`file${i}`, {
+        uri: asset.uri,
+        name: filename,
+        type,
+      } as any);
+    }
+
+    formData.append("totalFiles", assets.length.toString());
+    formData.append("uploadTime", new Date().toISOString());
+
+    try {
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
@@ -98,11 +140,11 @@ export default function HomeScreen() {
       }
 
       const result = await response.json();
-      setUploadStatus(`Upload successful! ${assets.length} images uploaded`);
+      setUploadStatus(`Global fetch upload successful! ${assets.length} images uploaded`);
 
       setTimeout(() => setUploadStatus(""), 3000);
     } catch (error) {
-      setUploadStatus(`Upload failed: ${error.message}`);
+      setUploadStatus(`Global fetch upload failed: ${error.message}`);
       setTimeout(() => setUploadStatus(""), 3000);
     }
   };
@@ -130,7 +172,7 @@ export default function HomeScreen() {
 
     try {
       setUploadStatus("Uploading blob...");
-      const response = await fetch("/api/upload", {
+      const response = await expoFetch("/api/upload", {
         method: "POST",
         body: formData,
         headers: {
@@ -180,6 +222,24 @@ export default function HomeScreen() {
         <View style={styles.buttonContainer}>
           <Button title="Take Photo" onPress={handleCameraPicker} />
         </View>
+
+        {selectedImages.length > 0 && (
+          <>
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Upload with expo/fetch"
+                onPress={() => uploadImagesWithExpoFetch(selectedImages.map(uri => ({ uri } as ImagePicker.ImagePickerAsset)))}
+              />
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Upload with global fetch"
+                onPress={() => uploadImagesWithGlobalFetch(selectedImages.map(uri => ({ uri } as ImagePicker.ImagePickerAsset)))}
+              />
+            </View>
+          </>
+        )}
 
         <View style={styles.buttonContainer}>
           <Button title="Create & Upload Blob" onPress={createAndUploadBlob} />
