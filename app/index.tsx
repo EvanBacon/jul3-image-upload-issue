@@ -61,7 +61,9 @@ export default function HomeScreen() {
     }
   };
 
-  const uploadImagesWithExpoFetch = async (assets: ImagePicker.ImagePickerAsset[]) => {
+  const uploadImagesWithExpoFetch = async (
+    assets: ImagePicker.ImagePickerAsset[]
+  ) => {
     setUploadStatus("Uploading with expo/fetch...");
 
     const formData = new FormData();
@@ -96,7 +98,9 @@ export default function HomeScreen() {
       }
 
       const result = await response.json();
-      setUploadStatus(`expo/fetch upload successful! ${assets.length} images uploaded`);
+      setUploadStatus(
+        `expo/fetch upload successful! ${assets.length} images uploaded`
+      );
 
       setTimeout(() => setUploadStatus(""), 3000);
     } catch (error) {
@@ -105,7 +109,9 @@ export default function HomeScreen() {
     }
   };
 
-  const uploadImagesWithGlobalFetch = async (assets: ImagePicker.ImagePickerAsset[]) => {
+  const uploadImagesWithGlobalFetch = async (
+    assets: ImagePicker.ImagePickerAsset[]
+  ) => {
     setUploadStatus("Uploading with global fetch...");
 
     const formData = new FormData();
@@ -140,7 +146,9 @@ export default function HomeScreen() {
       }
 
       const result = await response.json();
-      setUploadStatus(`Global fetch upload successful! ${assets.length} images uploaded`);
+      setUploadStatus(
+        `Global fetch upload successful! ${assets.length} images uploaded`
+      );
 
       setTimeout(() => setUploadStatus(""), 3000);
     } catch (error) {
@@ -228,14 +236,26 @@ export default function HomeScreen() {
             <View style={styles.buttonContainer}>
               <Button
                 title="Upload with expo/fetch"
-                onPress={() => uploadImagesWithExpoFetch(selectedImages.map(uri => ({ uri } as ImagePicker.ImagePickerAsset)))}
+                onPress={() =>
+                  uploadImagesWithExpoFetch(
+                    selectedImages.map(
+                      (uri) => ({ uri } as ImagePicker.ImagePickerAsset)
+                    )
+                  )
+                }
               />
             </View>
 
             <View style={styles.buttonContainer}>
               <Button
                 title="Upload with global fetch"
-                onPress={() => uploadImagesWithGlobalFetch(selectedImages.map(uri => ({ uri } as ImagePicker.ImagePickerAsset)))}
+                onPress={() =>
+                  uploadImagesWithGlobalFetch(
+                    selectedImages.map(
+                      (uri) => ({ uri } as ImagePicker.ImagePickerAsset)
+                    )
+                  )
+                }
               />
             </View>
           </>
